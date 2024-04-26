@@ -138,10 +138,15 @@ void DiskManager::create_file(const std::string &path) {
 void DiskManager::destroy_file(const std::string &path) {
     // Todo:
     // 调用unlink()函数
-    if(unlink(path.c_str()) == -1){
-        throw InternalError("Diskmanager::destory_file Error: unlink error");
+    if(path2fd_.find(path) != path2fd_.end()){
+        //文件已被打开
+        throw InternalError("Diskmanager::destory_file Error: file still open");
     }
-    // 注意不能删除未关闭的文件   //<- TODO
+    else{
+        if(unlink(path.c_str()) == -1){
+            throw InternalError("Diskmanager::destory_file Error: unlink error");
+        }
+    }
     
 }
 
