@@ -160,6 +160,16 @@ int DiskManager::open_file(const std::string &path) {
     // Todo:
     // 调用open()函数，使用O_RDWR模式
     //O_RDWR:读写
+    if(path2fd_.find(path) != path2fd_.end()){
+        //文件已打开
+        throw InternalError("Diskmanager::open_file Error: file alreay open");
+        return -1;
+    }
+    else{
+        //文件未打开
+        ssize_t fd = open(path.c_str(), O_RDWR);
+        return fd;
+    }
     
     // 注意不能重复打开相同文件，并且需要更新文件打开列表
 
