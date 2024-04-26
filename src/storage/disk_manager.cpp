@@ -119,7 +119,7 @@ bool DiskManager::is_file(const std::string &path) {
 void DiskManager::create_file(const std::string &path) {
     // Todo:
     // 调用open()函数，使用O_CREAT模式
-    int opfd = open( "path", O_CREAT | O_EXCL | O_WRONLY, S_IRUSR | S_IWUSR); 
+    int opfd = open( path.c_str(), O_CREAT | O_EXCL | O_WRONLY, S_IRUSR | S_IWUSR); 
     // 注意不能重复创建相同文件
     if(opfd == -1){
         if(errno = EEXIST){
@@ -138,6 +138,9 @@ void DiskManager::create_file(const std::string &path) {
 void DiskManager::destroy_file(const std::string &path) {
     // Todo:
     // 调用unlink()函数
+    if(unlink(path.c_str()) == -1){
+        throw InternalError("Diskmanager::destory_file Error: unlink error");
+    }
     // 注意不能删除未关闭的文件
     
 }
