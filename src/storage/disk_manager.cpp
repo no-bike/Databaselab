@@ -120,10 +120,10 @@ void DiskManager::create_file(const std::string &path) {
     // Todo:
     // 调用open()函数，使用O_CREAT模式
     if(is_file(path)){
-        throw InternalError("Diskmanager::create_file Error: file already exists");
+        throw FileExistsError("Diskmanager::create_file Error: file already exists");
         return;
     }
-    int opfd = open( path.c_str(), O_CREAT | O_EXCL | O_WRONLY, S_IRUSR | S_IWUSR); 
+    int opfd = open( path.c_str(), O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR); 
     // 注意不能重复创建相同文件
     if(opfd == -1){
             throw InternalError("Diskmanager::create_file Error: Open error");
@@ -139,7 +139,7 @@ void DiskManager::destroy_file(const std::string &path) {
     // Todo:
     // 调用unlink()函数
     if(!is_file(path)){
-        throw InternalError("Diskmanager::destory_file Error: file do not exist");
+        throw FileNotFoundError("Diskmanager::destory_file Error: file do not exist");
         return;
     }
     if(path2fd_.find(path) != path2fd_.end()){
@@ -165,7 +165,7 @@ int DiskManager::open_file(const std::string &path) {
     // 调用open()函数，使用O_RDWR模式
     //O_RDWR:读写
     if(!is_file(path)){
-        throw InternalError("Diskmanager::open file Error: file do not exist");
+        throw FileNotFoundError("Diskmanager::open file Error: file do not exist");
         return -1;
     }
     if(path2fd_.find(path) != path2fd_.end()){
