@@ -166,8 +166,11 @@ int DiskManager::open_file(const std::string &path) {
         return -1;
     }
     else{
-        //文件未打开
+        //文件未打开，打开文件
         ssize_t fd = open(path.c_str(), O_RDWR);
+        //更新文件打开列表
+        path2fd_[path] = fd;
+        fd2path_[fd] = path;
         return fd;
     }
     
