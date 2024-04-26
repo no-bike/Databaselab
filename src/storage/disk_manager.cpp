@@ -138,6 +138,10 @@ void DiskManager::create_file(const std::string &path) {
 void DiskManager::destroy_file(const std::string &path) {
     // Todo:
     // 调用unlink()函数
+    if(!is_file(path)){
+        throw InternalError("Diskmanager::destory_file Error: file do not exist");
+        return;
+    }
     if(path2fd_.find(path) != path2fd_.end()){
         //文件已被打开
         throw InternalError("Diskmanager::destory_file Error: file still open");
