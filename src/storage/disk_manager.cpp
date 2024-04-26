@@ -185,6 +185,17 @@ int DiskManager::open_file(const std::string &path) {
 void DiskManager::close_file(int fd) {
     // Todo:
     // 调用close()函数
+    if(fd2path_.find(fd) != fd2path_.end()){
+        //文件已打开,更新文件打开列表,关闭文件
+        path2fd_.erase(fd2path_[fd]);
+        fd2path_.erase(fd);
+        close(fd);
+    }
+    else{
+        //文件未打开
+        throw InternalError("Diskmanager::close_file Error: file is not opened");
+
+    }
     // 注意不能关闭未打开的文件，并且需要更新文件打开列表
 
 }
