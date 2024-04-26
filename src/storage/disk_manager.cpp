@@ -160,6 +160,10 @@ int DiskManager::open_file(const std::string &path) {
     // Todo:
     // 调用open()函数，使用O_RDWR模式
     //O_RDWR:读写
+    if(!is_file(path)){
+        throw InternalError("Diskmanager::open file Error: file do not exist");
+        return -1;
+    }
     if(path2fd_.find(path) != path2fd_.end()){
         //文件已打开
         throw InternalError("Diskmanager::open_file Error: file alreay open");
