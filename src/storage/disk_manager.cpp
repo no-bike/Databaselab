@@ -29,9 +29,18 @@ DiskManager::DiskManager() { memset(fd2pageno_, 0, MAX_FD * (sizeof(std::atomic<
 void DiskManager::write_page(int fd, page_id_t page_no, const char *offset, int num_bytes) {
     // Todo:
     // 1.lseek()定位到文件头，通过(fd,page_no)可以定位指定页面及其在磁盘文件中的偏移量
+    off_t offset1 = lseek(fd, page_no * PAGE_SIZE, SEEK_SET);
+    if(offset1 == -1){
+        throw InternalError("DiskManager::write_page lseek() Error");
+        return;                     //错误处理
+    }
     // 2.调用write()函数
+    ssize_t writesizeback =  write(fd ,offset, num_bytes);
     // 注意write返回值与num_bytes不等时 throw InternalError("DiskManager::write_page Error");
-
+    if (writesizeback != num_bytes){
+        throw InternalError("DiskManager::write_page Error");
+        return;
+    }
 }
 
 /**
