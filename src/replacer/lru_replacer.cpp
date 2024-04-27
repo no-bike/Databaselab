@@ -55,6 +55,12 @@ void LRUReplacer::unpin(frame_id_t frame_id) {
     // Todo:
     //  支持并发锁
     //  选择一个frame取消固定
+    if(LRUhash_.find(frame_id) == LRUhash_.end()){
+        //该框未上锁
+        LRUlist_.push_front(frame_id);          //加入到未上锁列表
+        LRUhash_[frame_id] = LRUlist_.begin();  //加入未上锁哈希表
+    }
+
 }
 
 /**
