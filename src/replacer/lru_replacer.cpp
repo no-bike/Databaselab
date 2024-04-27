@@ -40,6 +40,11 @@ void LRUReplacer::pin(frame_id_t frame_id) {
     // Todo:
     // 固定指定id的frame
     // 在数据结构中移除该frame
+    if(LRUhash_.find(frame_id) != LRUhash_.end()){
+        //该frame未上锁
+        LRUlist_.erase(LRUhash_[frame_id]);     //在未上锁列表中删除页
+        LRUhash_.erase(frame_id);               //在未上锁哈希表中删除
+    }
 }
 
 /**
