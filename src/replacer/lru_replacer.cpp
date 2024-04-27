@@ -52,7 +52,7 @@ void LRUReplacer::pin(frame_id_t frame_id) {
     // 固定指定id的frame
     // 在数据结构中移除该frame
     if(LRUhash_.find(frame_id) != LRUhash_.end()){
-        //该frame未上锁
+        //该frame未固定
         LRUlist_.erase(LRUhash_[frame_id]);     //在未固定列表中删除页
         LRUhash_.erase(frame_id);               //在未固定哈希表中删除
     }
@@ -65,6 +65,7 @@ void LRUReplacer::pin(frame_id_t frame_id) {
 void LRUReplacer::unpin(frame_id_t frame_id) {
     // Todo:
     //  支持并发锁
+    std::scoped_lock lock{latch_};
     //  选择一个frame取消固定
     if(LRUhash_.find(frame_id) == LRUhash_.end()){
         //该框未上锁
