@@ -26,9 +26,20 @@ bool LRUReplacer::victim(frame_id_t* frame_id) {
 
     // Todo:
     //  利用lru_replacer中的LRUlist_,LRUHash_实现LRU策略
-    //  选择合适的frame指定为淘汰页面,赋值给*frame_id
-
-    return true;
+    if(Size() > 0){
+        //有可被删除的页面
+        frame_id_t vic = LRUlist_.back();
+        LRUhash_.erase(vic);
+        LRUlist_.pop_back();
+        //  选择合适的frame指定为淘汰页面,赋值给*frame_id
+        *frame_id = vic;
+        return true;
+    }
+    else{
+        //没有可被删除的页面
+        frame_id = nullptr;
+        return false;
+    } 
 }
 
 /**
@@ -42,8 +53,8 @@ void LRUReplacer::pin(frame_id_t frame_id) {
     // 在数据结构中移除该frame
     if(LRUhash_.find(frame_id) != LRUhash_.end()){
         //该frame未上锁
-        LRUlist_.erase(LRUhash_[frame_id]);     //在未上锁列表中删除页
-        LRUhash_.erase(frame_id);               //在未上锁哈希表中删除
+        LRUlist_.erase(LRUhash_[frame_id]);     //在未固定列表中删除页
+        LRUhash_.erase(frame_id);               //在未固定哈希表中删除
     }
 }
 
@@ -57,8 +68,8 @@ void LRUReplacer::unpin(frame_id_t frame_id) {
     //  选择一个frame取消固定
     if(LRUhash_.find(frame_id) == LRUhash_.end()){
         //该框未上锁
-        LRUlist_.push_front(frame_id);          //加入到未上锁列表
-        LRUhash_[frame_id] = LRUlist_.begin();  //加入未上锁哈希表
+        LRUlist_.push_front(frame_id);          //加入到未固定列表
+        LRUhash_[frame_id] = LRUlist_.begin();  //加入未固定哈希表
     }
 
 }
