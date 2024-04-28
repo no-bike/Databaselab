@@ -55,14 +55,14 @@ void DiskManager::read_page(int fd, page_id_t page_no, char *offset, int num_byt
     // 1.lseek()定位到文件头，通过(fd,page_no)可以定位指定页面及其在磁盘文件中的偏移量
     off_t offset2 = lseek(fd, page_no * PAGE_SIZE, SEEK_SET);
     if(offset2 == -1){
-        throw InternalError("DiskManager::read_page Error");
+        throw InternalError("DiskManager::read_page read Error");
         return;
     }
     // 2.调用read()函数
     ssize_t readsizeback = read(fd, offset, num_bytes); 
     // 注意read返回值与num_bytes不等时，throw InternalError("DiskManager::read_page Error");
     if(readsizeback != num_bytes){
-        throw InternalError("DiskManager::read_page Error");
+        throw InternalError("DiskManager::read_page return size Error");
         return;
     }
 }

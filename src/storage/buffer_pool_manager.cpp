@@ -87,9 +87,6 @@ Page* BufferPoolManager::fetch_page(PageId page_id) {
     // 2.     若获得的可用frame存储的为dirty page，则须调用updata_page将page写回到磁盘
     update_page(&pages_[frame_id], page_id, frame_id);   
     // 3.     调用disk_manager_的read_page读取目标页到frame
-    disk_manager_->read_page(page_id.fd,page_id.page_no,
-                            pages_[frame_id].data_,
-                            PAGE_SIZE);
     // 4.     固定目标页，更新pin_count_
     replacer_->pin(frame_id);
     pages_[frame_id].pin_count_ = 1;
