@@ -202,5 +202,8 @@ bool BufferPoolManager::delete_page(PageId page_id) {
  * @param {int} fd 文件句柄
  */
 void BufferPoolManager::flush_all_pages(int fd) {
-    
+    for(int i = 0;i < pool_size_;++i){
+        flush_page(pages_[i].get_page_id());
+    }
+    return;
 }
