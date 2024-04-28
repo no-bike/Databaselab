@@ -144,8 +144,18 @@ bool BufferPoolManager::flush_page(PageId page_id) {
     std::scoped_lock lock{latch_};
     // 1. 查找页表,尝试获取目标页P
     // 1.1 目标页P没有被page_table_记录 ，返回false
+    frame_id_t frame_id;
+    if(page_table_.find(page_id) == page_table_.end()){
+        return false;
+    }
     // 2. 无论P是否为脏都将其写回磁盘。
+    Page* P = &pages_[frame_id];
+    disk_manager_->write_page(P->get_page_id().fd,
+                            P->get_page_id().page_no,
+                            P->data_,
+                            PAGE_SIZE);
     // 3. 更新P的is_dirty_
+    P->is_dirty_ = false;
    
     return true;
 }
