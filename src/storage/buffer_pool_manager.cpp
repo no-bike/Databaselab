@@ -55,9 +55,9 @@ void BufferPoolManager::update_page(Page *page, PageId new_page_id, frame_id_t n
     // 3 重置page的data，更新page id
     disk_manager_->read_page(new_page_id.fd,
                             new_page_id.page_no,
-                            page->get_data(),
+                            page->data_,
                             PAGE_SIZE);
-    page->get_page_id().page_no = new_page_id.page_no;
+    page->id_.page_no = new_page_id.page_no;
 }
 
 /**
