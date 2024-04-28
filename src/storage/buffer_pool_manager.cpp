@@ -43,9 +43,21 @@ bool BufferPoolManager::find_victim_page(frame_id_t* frame_id) {
 void BufferPoolManager::update_page(Page *page, PageId new_page_id, frame_id_t new_frame_id) {
     // Todo:
     // 1 如果是脏页，写回磁盘，并且把dirty置为false
+    if(page->is_dirty_){
+        disk_manager_->write_page(page->get_page_id().fd,
+                            page->get_page_id().page_no,
+                            page->get_data(),
+                            PAGE_SIZE);                 //<-不太确定这里是不是pagesize
+        page->is_dirty_ = false;
+    }
     // 2 更新page table
+    page_table_[new_page_id] = new_frame_id;
     // 3 重置page的data，更新page id
-
+    disk_manager_->read_page(new_page_id.fd,
+                            new_page_id.page_no,
+                            page->get_data(),
+                            PAGE_SIZE);
+    page->get_page_id().page_no = new_page_id.page_no;
 }
 
 /**
@@ -94,6 +106,7 @@ bool BufferPoolManager::unpin_page(PageId page_id, bool is_dirty) {
 bool BufferPoolManager::flush_page(PageId page_id) {
     // Todo:
     // 0. lock latch
+    std::scoped_lock lock{latch_};
     // 1. 查找页表,尝试获取目标页P
     // 1.1 目标页P没有被page_table_记录 ，返回false
     // 2. 无论P是否为脏都将其写回磁盘。
