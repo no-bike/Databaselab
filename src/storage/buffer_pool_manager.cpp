@@ -107,13 +107,29 @@ Page* BufferPoolManager::fetch_page(PageId page_id) {
 bool BufferPoolManager::unpin_page(PageId page_id, bool is_dirty) {
     // Todo:
     // 0. lock latch
+    std::scoped_lock lock{latch_};
     // 1. 尝试在page_table_中搜寻page_id对应的页P
     // 1.1 P在页表中不存在 return false
     // 1.2 P在页表中存在，获取其pin_count_
+    frame_id_t frame_id;
+    int pin_count;
+    if(page_table_.find(page_id) == page_table_.end()){
+        //在pagetable找不到
+        return false;
+    }
+    frame_id = page_table_[page_id];
+    pin_count = pages_[frame_id].pin_count_;
     // 2.1 若pin_count_已经等于0，则返回false
     // 2.2 若pin_count_大于0，则pin_count_自减一
     // 2.2.1 若自减后等于0，则调用replacer_的Unpin
+    if(!pin_count){
+        return false;
+    }
+    if(!(pin_count--)){
+        replacer_->unpin(frame_id);
+    }
     // 3 根据参数is_dirty，更改P的is_dirty_
+    pages_[frame_id].is_dirty_ = is_dirty;
     return true;
 }
 
