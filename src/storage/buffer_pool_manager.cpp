@@ -180,10 +180,20 @@ Page* BufferPoolManager::new_page(PageId* page_id) {
  * @param {PageId} page_id 目标页
  */
 bool BufferPoolManager::delete_page(PageId page_id) {
+    frame_id_t frame_id;
     // 1.   在page_table_中查找目标页，若不存在返回true
+    if(page_table_.find(page_id) == page_table_.end()){
+        return true;
+    }
     // 2.   若目标页的pin_count不为0，则返回false
+    frame_id = page_table_[page_id];
+    if(!pages_[frame_id].pin_count_){
+        return false;
+    }
     // 3.   将目标页数据写回磁盘，从页表中删除目标页，重置其元数据，将其加入free_list_，返回true
-    
+    flush_page(page_id);
+    page_table_.erase(page_id);
+    free_list_.push_front(frame_id);
     return true;
 }
 
