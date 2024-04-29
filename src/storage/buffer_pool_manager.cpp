@@ -151,8 +151,8 @@ bool BufferPoolManager::flush_page(PageId page_id) {
     }
     // 2. 无论P是否为脏都将其写回磁盘。
     Page* P = &pages_[frame_id];
-    disk_manager_->write_page(P->get_page_id().fd,
-                            P->get_page_id().page_no,
+    disk_manager_->write_page(page_id.fd,
+                            page_id.page_no,
                             P->data_,
                             PAGE_SIZE);
     // 3. 更新P的is_dirty_
@@ -168,20 +168,21 @@ bool BufferPoolManager::flush_page(PageId page_id) {
  */
 Page* BufferPoolManager::new_page(PageId* page_id) {
     // 1.   获得一个可用的frame，若无法获得则返回nullptr
-    frame_id_t frame_id;
-    if(!find_victim_page(&frame_id)){
-        return nullptr;
-    }
-    // 2.   在fd对应的文件分配一个新的page_id
-    page_id->page_no = disk_manager_->allocate_page(page_id->fd); //这里不是很确定新的pageid是否会自带fd
+    // 2.   在fd对应的文件分配一个新的page_id 
     // 3.   将frame的数据写回磁盘
-    flush_page(pages_[frame_id].get_page_id());
-    update_page(&pages_[frame_id], *page_id, frame_id);
     // 4.   固定frame，更新pin_count_
-    replacer_->pin(frame_id);
-    pages_[frame_id].pin_count_ = 1;
     // 5.   返回获得的page
-   return &pages_[frame_id];
+    frame_id_t frame_id;
+	if (!find_victim_page(&frame_id)) {
+    	return nullptr;
+    }
+
+	page_id->page_no = disk_manager_->allocate_page(page_id->fd);
+	Page *page = &pages_[frame_id];
+	update_page(page, *page_id, frame_id);
+	replacer_->pin(frame_id);
+	page->pin_count_ = 1;
+	return page;
 }
 
 /**
