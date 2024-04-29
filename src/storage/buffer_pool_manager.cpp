@@ -46,11 +46,11 @@ void BufferPoolManager::update_page(Page *page, PageId new_page_id, frame_id_t n
         disk_manager_->write_page(page->get_page_id().fd,
                             page->get_page_id().page_no,
                             page->get_data(),
-                            PAGE_SIZE);                 //<-不太确定这里是不是pagesize
+                            PAGE_SIZE);
         page->is_dirty_ = false;
     }
     // 2 更新page table
-    page_table_[new_page_id] = new_frame_id;
+    page_table_[new_page_id] = new_frame_id;            //重置数据这里有问题。。sos
     page_table_.erase(page->get_page_id());
     // 3 重置page的data，更新page id
     disk_manager_->read_page(new_page_id.fd,
