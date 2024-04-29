@@ -51,6 +51,7 @@ void BufferPoolManager::update_page(Page *page, PageId new_page_id, frame_id_t n
     }
     // 2 更新page table
     page_table_[new_page_id] = new_frame_id;
+    page_table_.erase(page->get_page_id());
     // 3 重置page的data，更新page id
     disk_manager_->read_page(new_page_id.fd,
                             new_page_id.page_no,
@@ -139,6 +140,10 @@ bool BufferPoolManager::flush_page(PageId page_id) {
     // 0. lock latch
     std::scoped_lock lock{latch_};
     // 1. 查找页表,尝试获取目标页P
+    if(page_id.page_no == INVALID_PAGE_ID){
+        throw InternalError("BufferPoolManager::flush_page: Pageid is invaild");
+        return false;
+    }
     // 1.1 目标页P没有被page_table_记录 ，返回false
     frame_id_t frame_id;
     if(page_table_.find(page_id) == page_table_.end()){
@@ -170,6 +175,7 @@ Page* BufferPoolManager::new_page(PageId* page_id) {
     // 2.   在fd对应的文件分配一个新的page_id
     page_id->page_no = disk_manager_->allocate_page(page_id->fd); //这里不是很确定新的pageid是否会自带fd
     // 3.   将frame的数据写回磁盘
+    flush_page(pages_[frame_id].get_page_id());
     update_page(&pages_[frame_id], *page_id, frame_id);
     // 4.   固定frame，更新pin_count_
     replacer_->pin(frame_id);
