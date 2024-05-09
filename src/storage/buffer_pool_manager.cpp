@@ -50,8 +50,9 @@ void BufferPoolManager::update_page(Page *page, PageId new_page_id, frame_id_t n
         page->is_dirty_ = false;
     }
     // 2 更新page table
-    page_table_[new_page_id] = new_frame_id;            //重置数据这里有问题。。sos
     page_table_.erase(page->get_page_id());
+    page_table_[new_page_id] = new_frame_id;            //重置数据这里有问题。。sos
+
     // 3 重置page的data，更新page id
     disk_manager_->read_page(new_page_id.fd,
                             new_page_id.page_no,
@@ -87,6 +88,7 @@ Page* BufferPoolManager::fetch_page(PageId page_id) {
     }
     // 2.     若获得的可用frame存储的为dirty page，则须调用updata_page将page写回到磁盘
     update_page(&pages_[frame_id], page_id, frame_id);   
+    page_table_[page_id] = frame_id;
     // 3.     调用disk_manager_的read_page读取目标页到frame
     // 4.     固定目标页，更新pin_count_
     replacer_->pin(frame_id);
@@ -109,20 +111,18 @@ bool BufferPoolManager::unpin_page(PageId page_id, bool is_dirty) {
     // 1.1 P在页表中不存在 return false
     // 1.2 P在页表中存在，获取其pin_count_
     frame_id_t frame_id;
-    int pin_count;
     if(page_table_.find(page_id) == page_table_.end()){
         //在pagetable找不到
         return false;
     }
     frame_id = page_table_[page_id];
-    pin_count = pages_[frame_id].pin_count_;
     // 2.1 若pin_count_已经等于0，则返回false
     // 2.2 若pin_count_大于0，则pin_count_自减一
     // 2.2.1 若自减后等于0，则调用replacer_的Unpin
-    if(!pin_count){
+    if(pages_[frame_id].pin_count_ <= 0){
         return false;
     }
-    if(!(pin_count--)){
+    if(--pages_[frame_id].pin_count_ == 0){
         replacer_->unpin(frame_id);
     }
     // 3 根据参数is_dirty，更改P的is_dirty_

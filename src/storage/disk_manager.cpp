@@ -61,9 +61,8 @@ void DiskManager::read_page(int fd, page_id_t page_no, char *offset, int num_byt
     // 2.调用read()函数
     ssize_t readsizeback = read(fd, offset, num_bytes); 
     // 注意read返回值与num_bytes不等时，throw InternalError("DiskManager::read_page Error");
-    if(readsizeback != num_bytes){
-        throw InternalError("DiskManager::read_page return size Error");
-        return;
+    if(readsizeback < num_bytes){
+        memset(offset + readsizeback, 0, num_bytes - readsizeback);
     }
 }
 
