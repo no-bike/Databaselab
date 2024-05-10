@@ -50,8 +50,9 @@ void BufferPoolManager::update_page(Page *page, PageId new_page_id, frame_id_t n
         page->is_dirty_ = false;
     }
     // 2 更新page table
+    page_table_[new_page_id] = new_frame_id;
     page_table_.erase(page->get_page_id());
-    page_table_[new_page_id] = new_frame_id;            //重置数据这里有问题。。sos
+                //重置数据这里有问题。。sos
 
     // 3 重置page的data，更新page id
     disk_manager_->read_page(new_page_id.fd,
@@ -88,7 +89,6 @@ Page* BufferPoolManager::fetch_page(PageId page_id) {
     }
     // 2.     若获得的可用frame存储的为dirty page，则须调用updata_page将page写回到磁盘
     update_page(&pages_[frame_id], page_id, frame_id);   
-    page_table_[page_id] = frame_id;
     // 3.     调用disk_manager_的read_page读取目标页到frame
     // 4.     固定目标页，更新pin_count_
     replacer_->pin(frame_id);
@@ -198,7 +198,7 @@ bool BufferPoolManager::delete_page(PageId page_id) {
     }
     // 2.   若目标页的pin_count不为0，则返回false
     frame_id = page_table_[page_id];
-    if(!pages_[frame_id].pin_count_){
+    if(pages_[frame_id].pin_count_){
         return false;
     }
     // 3.   将目标页数据写回磁盘，从页表中删除目标页，重置其元数据，将其加入free_list_，返回true
