@@ -177,6 +177,7 @@ bool BufferPoolManager::flush_page(PageId page_id) {
     if (page_table_.find(page_id) == page_table_.end()) {
         return false;
     }
+    frame_id = page_table_[page_id];
     // 2. 无论P是否为脏都将其写回磁盘。
     Page* P = &pages_[frame_id];
     disk_manager_->write_page(page_id.fd, page_id.page_no, P->data_, PAGE_SIZE);
