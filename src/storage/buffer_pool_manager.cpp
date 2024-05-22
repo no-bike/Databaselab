@@ -166,6 +166,7 @@ bool BufferPoolManager::unpin_page(PageId page_id, bool is_dirty) {
 bool BufferPoolManager::flush_page(PageId page_id) {
     // Todo:
     // 0. lock latch
+    std::scoped_lock lock{latch_};
     // 1. 查找页表,尝试获取目标页P
     if (page_id.page_no == INVALID_PAGE_ID) {
         throw InternalError("BufferPoolManager::flush_page: Pageid is invaild");
@@ -251,10 +252,13 @@ bool BufferPoolManager::delete_page(PageId page_id) {
     if (pages_[frame_id].pin_count_) {
         return false;
     }
-    // 3.   将目标页数据写回磁盘，从页表中删除目标页，重置其元数据，将其加入free_list_，返回true
-    flush_page(page_id);
-    
+    // 3.   将目标页数据写回磁盘，从页表中删除目标页，重置其元数据，将其加入free_list_，返回true    
     Page* page = &pages_[frame_id];
+    if(page->is_dirty_){
+        disk_manager_->write_page(page->id_.fd, page->id_.page_no, page->data_, PAGE_SIZE);
+        page->is_dirty_ = false;
+    }
+
     page->id_.page_no = INVALID_PAGE_ID;
     page->pin_count_ = 0;
 
@@ -269,9 +273,10 @@ bool BufferPoolManager::delete_page(PageId page_id) {
  * @param {int} fd 文件句柄
  */
 void BufferPoolManager::flush_all_pages(int fd) {
-    std::scoped_lock lock{latch_};
     for (int i = 0; i < pool_size_; ++i) {
-        flush_page(pages_[i].get_page_id());
+        if (pages_[i].get_page_id().fd == fd) {
+            flush_page(pages_[i].get_page_id());
+        }
     }
     return;
 }
