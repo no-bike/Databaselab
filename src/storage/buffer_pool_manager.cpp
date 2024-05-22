@@ -20,14 +20,32 @@ bool BufferPoolManager::find_victim_page(frame_id_t* frame_id) {
     // 1 使用BufferPoolManager::free_list_判断缓冲池是否已满需要淘汰页面
     // 1.1 未满获得frame
     // 1.2 已满使用lru_replacer中的方法选择淘汰页面
-    if(free_list_.empty()){
-        //空闲帧为空
-        return replacer_->victim(frame_id);
-    }
-    else{
+    if(!free_list_.empty()){
         //空闲帧非空
         *frame_id = free_list_.front();
         free_list_.pop_front();
+        return true;
+    }
+    if(replacer_->victim(frame_id)){
+        page_id_t replace_page_no = -1;
+        for(const auto &item : page_table_){
+            if(item.second == *frame_id){
+                replace_page_no = item.first.page_no;
+                break;
+            }
+        }
+        if(replace_page_no != -1){
+            Page* replace_page = &pages_[*frame_id];
+
+            if(replace_page->is_dirty_){
+                disk_manager_->write_page(replace_page->id_.fd,
+                                        replace_page_no,
+                                        replace_page->data_,
+                                        PAGE_SIZE);
+                replace_page->pin_count_ = 0;
+            }
+            page_table_.erase(replace_page->id_);
+        }
         return true;
     }
     return false;
