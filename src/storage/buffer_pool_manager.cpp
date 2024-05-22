@@ -166,7 +166,6 @@ bool BufferPoolManager::unpin_page(PageId page_id, bool is_dirty) {
 bool BufferPoolManager::flush_page(PageId page_id) {
     // Todo:
     // 0. lock latch
-    std::scoped_lock lock{latch_};
     // 1. 查找页表,尝试获取目标页P
     if (page_id.page_no == INVALID_PAGE_ID) {
         throw InternalError("BufferPoolManager::flush_page: Pageid is invaild");
@@ -254,8 +253,14 @@ bool BufferPoolManager::delete_page(PageId page_id) {
     }
     // 3.   将目标页数据写回磁盘，从页表中删除目标页，重置其元数据，将其加入free_list_，返回true
     flush_page(page_id);
+    
+    Page* page = &pages_[frame_id];
+    page->id_.page_no = INVALID_PAGE_ID;
+    page->pin_count_ = 0;
+
+    
     page_table_.erase(page_id);
-    free_list_.push_front(frame_id);
+    free_list_.push_back(frame_id);
     return true;
 }
 
