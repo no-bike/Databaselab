@@ -16,6 +16,7 @@ See the Mulan PSL v2 for more details. */
  * @param {frame_id_t*} frame_id 帧页id指针,返回成功找到的可替换帧id
  */
 bool BufferPoolManager::find_victim_page(frame_id_t* frame_id) {
+    std::scoped_lock lock{latch_};
     // Todo:
     // 1 使用BufferPoolManager::free_list_判断缓冲池是否已满需要淘汰页面
     // 1.1 未满获得frame
@@ -59,6 +60,7 @@ bool BufferPoolManager::find_victim_page(frame_id_t* frame_id) {
  */
 void BufferPoolManager::update_page(Page *page, PageId new_page_id, frame_id_t new_frame_id) {
     // Todo:
+    std::scoped_lock lock{latch_};
     // 1 如果是脏页，写回磁盘，并且把dirty置为false
     if(page->is_dirty_){
         disk_manager_->write_page(page->get_page_id().fd,
