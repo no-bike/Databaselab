@@ -198,17 +198,41 @@ Page* BufferPoolManager::new_page(PageId* page_id) {
     // 3.   将frame的数据写回磁盘
     // 4.   固定frame，更新pin_count_
     // 5.   返回获得的page
+    page_id_t new_page_id = disk_manager_->allocate_page(page_id->fd);
+
+    bool is_all = true;
+    for (int i = 0; i < pool_size_; ++i) {
+        if (pages_[i].pin_count_ == 0) {
+            is_all = false;
+            break;
+        }
+    }
+    if (is_all) {
+        return nullptr;
+    }
+
     frame_id_t frame_id;
     if (!find_victim_page(&frame_id)) {
         return nullptr;
     }
 
-    page_id->page_no = disk_manager_->allocate_page(page_id->fd);
-    Page* page = &pages_[frame_id];
-    update_page(page, *page_id, frame_id);
+    Page* victim_page = &pages_[frame_id];
+    if (victim_page->is_dirty_) {
+        disk_manager_->write_page(victim_page->id_.fd, victim_page->id_.page_no, victim_page->data_, PAGE_SIZE);
+        victim_page->is_dirty_ = false;
+    }
+
+    page_id->page_no = new_page_id;
+    victim_page->id_ = *page_id;
+    victim_page->pin_count_ = 1;
     replacer_->pin(frame_id);
-    page->pin_count_ = 1;
-    return page;
+    page_table_[victim_page->id_] = frame_id;
+
+    memset(victim_page->data_, 0, PAGE_SIZE);
+
+    disk_manager_->write_page(victim_page->id_.fd, victim_page->id_.page_no, victim_page->data_, PAGE_SIZE);
+
+    return victim_page;
 }
 
 /**
