@@ -38,7 +38,7 @@ void DiskManager::write_page(int fd, page_id_t page_no, const char *offset, int 
     ssize_t writesizeback =  write(fd ,offset, num_bytes);
     // 注意write返回值与num_bytes不等时 throw InternalError("DiskManager::write_page Error");
     if (writesizeback != num_bytes){
-        throw InternalError("DiskManager::write_page Error");
+        throw InternalError("DiskManager::write_page nums Error");
         return;
     }
 }
@@ -62,7 +62,7 @@ void DiskManager::read_page(int fd, page_id_t page_no, char *offset, int num_byt
     ssize_t readsizeback = read(fd, offset, num_bytes); 
     // 注意read返回值与num_bytes不等时，throw InternalError("DiskManager::read_page Error");
     if(readsizeback != num_bytes){
-        throw InternalError("DiskManager::read_page Error");
+        throw InternalError("DiskManager::read_page nums Error");
         return;
     }
 }
