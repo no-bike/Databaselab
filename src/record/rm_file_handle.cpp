@@ -89,7 +89,7 @@ void RmFileHandle::delete_record(const Rid& rid, Context* context) {
     RmPageHandle page_handle = fetch_page_handle(rid.page_no);
     page_handle.bitmap[rid.slot_no] = 0;
     if(file_hdr_.num_records_per_page == page_handle.page_hdr->num_records--){
-        release_page_handle(&page_handle);
+        release_page_handle(page_handle);
     }
 }
 
@@ -103,6 +103,8 @@ void RmFileHandle::update_record(const Rid& rid, char* buf, Context* context) {
     // Todo:
     // 1. 获取指定记录所在的page handle
     // 2. 更新记录
+    RmPageHandle page_handle = fetch_page_handle(rid.page_no);
+    *page_handle.get_slot(rid.slot_no) = *buf;
 }
 
 /**
