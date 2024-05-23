@@ -127,10 +127,15 @@ RmPageHandle RmFileHandle::create_page_handle() {
     // Todo:
     // 1. 判断file_hdr_中是否还有空闲页
     //     1.1 没有空闲页：使用缓冲池来创建一个新page；可直接调用create_new_page_handle()
+    if(file_hdr_.first_free_page_no == -1 || file_hdr_.first_free_page_no >= file_hdr_.num_pages) {
+        return create_new_page_handle();
+    }
     //     1.2 有空闲页：直接获取第一个空闲页
+    PageId page_id = {fd_, file_hdr_.first_free_page_no};
+    Page* page = buffer_pool_manager_->fetch_page(page_id);
     // 2. 生成page handle并返回给上层
 
-    return RmPageHandle(&file_hdr_, nullptr);
+    return RmPageHandle(&file_hdr_, page);
 }
 
 /**
