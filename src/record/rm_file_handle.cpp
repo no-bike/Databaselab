@@ -45,14 +45,9 @@ Rid RmFileHandle::insert_record(char* buf, Context* context) {
     // 4. 更新page_handle.page_hdr中的数据结构
     // 注意考虑插入一条记录后页面已满的情况，需要更新file_hdr_.first_free_page_no
     RmPageHandle page_handle = create_page_handle();
-    int slot_no = 0;
-    for (; slot_no < file_hdr_.bitmap_size; slot_no++) {
-        if (page_handle.bitmap[slot_no] == 0) {
-            break;
-        }
-    }
+    int slot_no = Bitmap::first_bit(false, page_handle.bitmap, file_hdr_.num_records_per_page);
+    Bitmap::set(page_handle.bitmap, slot_no);
     
-    page_handle.bitmap[slot_no] = 1;
     page_handle.page_hdr->num_records++;
     if (page_handle.page_hdr->num_records == file_hdr_.num_records_per_page) {
         file_hdr_.first_free_page_no = page_handle.page_hdr->next_free_page_no;
@@ -69,8 +64,8 @@ Rid RmFileHandle::insert_record(char* buf, Context* context) {
  */
 void RmFileHandle::insert_record(const Rid& rid, char* buf) {
     RmPageHandle page_handle = fetch_page_handle(rid.page_no);
-    if(!page_handle.bitmap[rid.slot_no]){
-        page_handle.bitmap[rid.slot_no] = 1;
+    if(!Bitmap::is_set(page_handle.bitmap, rid.slot_no)){
+        Bitmap::set(page_handle.bitmap, rid.slot_no);
         page_handle.page_hdr->num_records++;
         if(page_handle.page_hdr->num_records == file_hdr_.num_records_per_page){
             file_hdr_.first_free_page_no = page_handle.page_hdr->next_free_page_no;

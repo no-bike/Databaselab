@@ -26,7 +26,7 @@ RmScan::RmScan(const RmFileHandle *file_handle) : file_handle_(file_handle) {
         // 遍历页面中的所有slot
         for (; rid_.slot_no < file_handle_->file_hdr_.num_records_per_page; rid_.slot_no++) {
             // 如果找到一个非空闲的slot，返回
-            if (page_handle.bitmap[rid_.slot_no] == 1) {
+            if (Bitmap::is_set(page_handle.bitmap, rid_.slot_no)) {
                 return;
             }
         }
@@ -51,7 +51,7 @@ void RmScan::next() {
         // 遍历页面中的所有slot
         for (; rid_.slot_no < file_handle_->file_hdr_.num_records_per_page; rid_.slot_no++) {
             // 如果找到一个非空闲的slot，返回
-            if (page_handle.bitmap[rid_.slot_no] == 1) {
+            if (Bitmap::is_set(page_handle.bitmap, rid_.slot_no)) {
                 return;
             }
         }
