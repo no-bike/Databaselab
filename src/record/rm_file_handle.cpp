@@ -48,11 +48,12 @@ Rid RmFileHandle::insert_record(char* buf, Context* context) {
             break;
         }
     }
-    if (slot_no == file_hdr_.bitmap_size - 1) {
-        file_hdr_.first_free_page_no = page_handle.page_hdr->next_free_page_no;
-    }
+    
     page_handle.bitmap[slot_no] = 1;
     page_handle.page_hdr->num_records++;
+    if (page_handle.page_hdr->num_records == file_hdr_.num_records_per_page) {
+        file_hdr_.first_free_page_no = page_handle.page_hdr->next_free_page_no;
+    }
     memcpy(page_handle.get_slot(slot_no), buf, file_hdr_.record_size);
 
     return Rid{page_handle.page->get_page_id().page_no, slot_no};
@@ -63,7 +64,12 @@ Rid RmFileHandle::insert_record(char* buf, Context* context) {
  * @param {Rid&} rid 要插入记录的位置
  * @param {char*} buf 要插入记录的数据
  */
-void RmFileHandle::insert_record(const Rid& rid, char* buf) {}
+void RmFileHandle::insert_record(const Rid& rid, char* buf) {
+    RmPageHandle page_handle = fetch_page_handle(rid.page_no);
+    if(!page_handle.bitmap[rid.slot_no]){
+        
+    }
+}
 
 /**
  * @description: 删除记录文件中记录号为rid的记录
