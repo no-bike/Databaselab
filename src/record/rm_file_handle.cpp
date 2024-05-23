@@ -104,7 +104,7 @@ void RmFileHandle::update_record(const Rid& rid, char* buf, Context* context) {
     // 1. 获取指定记录所在的page handle
     // 2. 更新记录
     RmPageHandle page_handle = fetch_page_handle(rid.page_no);
-    *page_handle.get_slot(rid.slot_no) = *buf;
+    memcpy(page_handle.get_slot(rid.slot_no), buf, file_hdr_.record_size);
 }
 
 /**
