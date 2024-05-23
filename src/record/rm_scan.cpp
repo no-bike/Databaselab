@@ -43,8 +43,9 @@ RmScan::RmScan(const RmFileHandle *file_handle) : file_handle_(file_handle) {
 void RmScan::next() {
     // Todo:
     // 找到文件中下一个存放了记录的非空闲位置，用rid_来指向这个位置
-
     // 遍历所有的页面
+    if(rid_.page_no == -1) return;
+    rid_.slot_no++;
     for (; rid_.page_no < file_handle_->file_hdr_.num_pages; rid_.page_no++) {
         RmPageHandle page_handle = file_handle_->fetch_page_handle(rid_.page_no);
         // 遍历页面中的所有slot

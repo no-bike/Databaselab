@@ -21,9 +21,12 @@ std::unique_ptr<RmRecord> RmFileHandle::get_record(const Rid& rid, Context* cont
     // 1. 获取指定记录所在的page handle
     // 2. 初始化一个指向RmRecord的指针（赋值其内部的data和size）
     RmPageHandle page_handle = fetch_page_handle(rid.page_no);
-    std::unique_ptr<RmRecord> rmrecord = std::make_unique<RmRecord>();
+    std::unique_ptr<RmRecord> rmrecord = std::make_unique<RmRecord>(file_hdr_.record_size);
+    if(!Bitmap::is_set(page_handle.bitmap, rid.slot_no)){
+        throw RecordNotFoundError(rid.page_no, rid.slot_no);
+    }
     rmrecord->size = file_hdr_.record_size;
-    rmrecord->data = page_handle.get_slot(rid.slot_no);
+    memcpy(rmrecord->data, page_handle.get_slot(rid.slot_no), rmrecord->size);
 
     return rmrecord;
 }
