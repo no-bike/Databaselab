@@ -63,6 +63,9 @@ Rid RmFileHandle::insert_record(char* buf, Context* context) {
  * @param {char*} buf 要插入记录的数据
  */
 void RmFileHandle::insert_record(const Rid& rid, char* buf) {
+    if (rid.page_no < file_hdr_.num_pages) {
+        create_new_page_handle();
+    }
     RmPageHandle page_handle = fetch_page_handle(rid.page_no);
     if(!Bitmap::is_set(page_handle.bitmap, rid.slot_no)){
         Bitmap::set(page_handle.bitmap, rid.slot_no);
@@ -85,7 +88,10 @@ void RmFileHandle::delete_record(const Rid& rid, Context* context) {
     // 2. 更新page_handle.page_hdr中的数据结构
     // 注意考虑删除一条记录后页面未满的情况，需要调用release_page_handle()
     RmPageHandle page_handle = fetch_page_handle(rid.page_no);
-    page_handle.bitmap[rid.slot_no] = 0;
+    if(!Bitmap::is_set(page_handle.bitmap, rid.slot_no)) {
+      throw PageNotExistError("a`", rid.page_no);
+    }
+    Bitmap::reset(page_handle.bitmap, rid.slot_no);
     if(file_hdr_.num_records_per_page == page_handle.page_hdr->num_records--){
         release_page_handle(page_handle);
     }
@@ -102,6 +108,9 @@ void RmFileHandle::update_record(const Rid& rid, char* buf, Context* context) {
     // 1. 获取指定记录所在的page handle
     // 2. 更新记录
     RmPageHandle page_handle = fetch_page_handle(rid.page_no);
+    if(!Bitmap::is_set(page_handle.bitmap, rid.slot_no)) {
+        throw PageNotExistError("a`", rid.page_no);
+    }
     memcpy(page_handle.get_slot(rid.slot_no), buf, file_hdr_.record_size);
 }
 
@@ -139,6 +148,8 @@ RmPageHandle RmFileHandle::create_new_page_handle() {
     buffer_pool_manager_->new_page(&pageid);
     Page* page = buffer_pool_manager_->fetch_page(pageid);
 
+    file_hdr_.first_free_page_no = pageid.page_no;
+
     return RmPageHandle(&file_hdr_, page);
 }
 
@@ -153,7 +164,12 @@ RmPageHandle RmFileHandle::create_page_handle() {
     // 1. 判断file_hdr_中是否还有空闲页
     //     1.1 没有空闲页：使用缓冲池来创建一个新page；可直接调用create_new_page_handle()
     if (file_hdr_.first_free_page_no == -1 || file_hdr_.first_free_page_no >= file_hdr_.num_pages) {
-        return create_new_page_handle();
+        RmPageHandle page_handle = create_new_page_handle();
+        page_handle.page_hdr->num_records = 0;
+        page_handle.page_hdr->next_free_page_no = RM_NO_PAGE;
+        file_hdr_.num_pages++;
+        
+        return page_handle;
     }
     //     1.2 有空闲页：直接获取第一个空闲页
     PageId page_id = {fd_, file_hdr_.first_free_page_no};
