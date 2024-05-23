@@ -107,8 +107,11 @@ RmPageHandle RmFileHandle::create_new_page_handle() {
     // 1.使用缓冲池来创建一个新page
     // 2.更新page handle中的相关信息
     // 3.更新file_hdr_
+    PageId pageid = {fd_, file_hdr_.num_pages++};
+    buffer_pool_manager_->new_page(&pageid);
+    Page* page = buffer_pool_manager_->fetch_page(pageid);
 
-    return RmPageHandle(&file_hdr_, nullptr);
+    return RmPageHandle(&file_hdr_, page);
 }
 
 /**
