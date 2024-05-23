@@ -69,7 +69,7 @@ void RmScan::next() {
 bool RmScan::is_end() const {
     // Todo: 修改返回值
 
-    return false;
+    return rid_.page_no == -1;
 }
 
 /**
